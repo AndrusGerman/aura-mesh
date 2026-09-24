@@ -18,6 +18,8 @@ spec:
       app: aura-mesh
   template:
     metadata:
+      annotations:
+        kaido.group/nginx-config-revision: "2026-09-24-mjs-mime"
       labels:
         app: aura-mesh
         app.kubernetes.io/name: aura-mesh
@@ -77,4 +79,3 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 16Mi
-

@@ -30,5 +30,11 @@ data:
             add_header Cache-Control "public, max-age=31536000, immutable";
             try_files $uri =404;
         }
-    }
 
+        location ~* \.mjs$ {
+            types { application/javascript mjs; }
+            default_type application/javascript;
+            add_header Cache-Control "public, max-age=31536000, immutable";
+            try_files $uri =404;
+        }
+    }
