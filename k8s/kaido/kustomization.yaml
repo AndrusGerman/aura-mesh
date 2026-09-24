@@ -9,5 +9,5 @@ resources:
 images:
   - name: aura-mesh
     newName: southamerica-east1-docker.pkg.dev/gen-lang-client-0331944990/aura-mesh/aura-mesh
-    digest: sha256:6bf5f58eac5d4d99be51d0e3c22496858a3139ae459a6ba37a8f288778d4d098
+    digest: sha256:96814642d9acf142e8a780754a4af9bb1bfa424e7f2f3e03f401154d83414085
 
