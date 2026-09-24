@@ -1,0 +1,13 @@
+{
+  "name": "aura-mesh",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Estudio interactivo de geometría luminosa y refracción controlada con las manos.",
+  "type": "module",
+  "scripts": {
+    "start": "node serve-local.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "license": "MIT"
+}
+

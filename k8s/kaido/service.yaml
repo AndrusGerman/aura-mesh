@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aura-mesh
+  labels:
+    app.kubernetes.io/name: aura-mesh
+    app.kubernetes.io/part-of: andrusdiaz
+spec:
+  type: ClusterIP
+  selector:
+    app: aura-mesh
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+

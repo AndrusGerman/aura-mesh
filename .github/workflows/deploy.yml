@@ -1,0 +1,88 @@
+name: Build and publish AuraMesh
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/**'
+      - 'Dockerfile'
+      - 'nginx.conf'
+      - 'package.json'
+      - 'scripts/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: aura-mesh-main
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm run verify
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: google-github-actions/auth@v3
+        id: google
+        with:
+          workload_identity_provider: projects/174766353053/locations/global/workloadIdentityPools/github-actions/providers/github-aura-mesh
+          service_account: aura-mesh-gha@gen-lang-client-0331944990.iam.gserviceaccount.com
+          token_format: access_token
+      - name: Authenticate Docker to Artifact Registry
+        env:
+          ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
+        run: printf '%s' "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin southamerica-east1-docker.pkg.dev
+      - uses: docker/build-push-action@v6
+        id: image
+        with:
+          context: .
+          push: true
+          tags: southamerica-east1-docker.pkg.dev/gen-lang-client-0331944990/aura-mesh/aura-mesh:${{ github.sha }}
+      - name: Commit the desired image digest for Flux
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+
+          digest = os.environ['IMAGE_DIGEST']
+          assert re.fullmatch(r'sha256:[0-9a-f]{64}', digest)
+          path = Path('k8s/kaido/kustomization.yaml')
+          body = path.read_text()
+          body, changes = re.subn(
+              r'(newName: southamerica-east1-docker\.pkg\.dev/gen-lang-client-0331944990/aura-mesh/aura-mesh\n\s+)(?:newTag: [^\n]+|digest: sha256:[0-9a-f]{64})',
+              r'\1digest: ' + digest,
+              body,
+          )
+          assert changes == 1
+          path.write_text(body)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add k8s/kaido/kustomization.yaml
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "deploy: update AuraMesh image [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - name: Remove registry credentials
+        if: always()
+        run: docker logout southamerica-east1-docker.pkg.dev
+

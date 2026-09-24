@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: andrusdiaz
+resources:
+  - serviceaccount.yaml
+  - nginx-config.yaml
+  - deployment.yaml
+  - service.yaml
+images:
+  - name: aura-mesh
+    newName: southamerica-east1-docker.pkg.dev/gen-lang-client-0331944990/aura-mesh/aura-mesh
+    newTag: bootstrap
+
